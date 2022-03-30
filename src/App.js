@@ -1,25 +1,77 @@
-import logo from './logo.svg';
+import React from 'react';
+import DogImage from './components/dogs/dogs';
+import {useEffect, useState} from "react";
 import './App.css';
 
+
 function App() {
+
+  const [dogUrlArray, setDogUrlArray] = useState([]);
+  const [dogUrl, setDogUrl] = useState('');
+
+  useEffect(() => {
+    const temp = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      temp.push(localStorage.getItem(localStorage.key(i)));
+    }
+    setDogUrlArray(temp);
+
+    handleClick();
+  }, []);
+
+  useEffect(() => {
+
+    if (dogUrl.length <= 0) {
+      return;
+    }
+
+    const key = Math.floor((Math.random() + 1) * 1000000);
+    const urlObj = {
+      key: key,
+      url: dogUrl
+    };
+
+    localStorage.setItem(key.toString(), JSON.stringify(urlObj));
+    setDogUrlArray([...dogUrlArray, JSON.stringify(urlObj)])
+  }, [dogUrl]);
+
+
+  const handleClick = async () => {
+
+    const response = await fetch('https://random.dog/woof.json');
+    const body = await response.json();
+
+    setDogUrl(body.url)
+
+  };
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <DogImage src={dogUrl} width="500" height="500"/>
+      <button className="Button1" onClick={() => handleClick()}>Show a new dog!</button>
+      <ul>
+        {
+          dogUrlArray.map((imageUrl, index) => {
+            const imageObj = JSON.parse(imageUrl);
+
+            return (
+              <li key={index} onClick={() => {
+                localStorage.removeItem(imageObj.key);
+                setDogUrlArray([
+                  ...dogUrlArray.slice(0, index),
+                  ...dogUrlArray.slice(index + 1, dogUrlArray.length)
+                ]);
+
+              }}>{imageObj.url}</li>
+            )
+          })
+        }
+      </ul>
     </div>
   );
+
+    
+
 }
 
 export default App;
